@@ -1,7 +1,9 @@
 import { readFile } from "fs/promises";
 
 async function main() {
-  const users: any[] = JSON.parse(await readFile("data-last.json", "utf-8"));
+  const users: any[] = JSON.parse(
+    await readFile("data-last-emoji.json", "utf-8")
+  );
 
   const headerCells = [
     "LINE ID",
