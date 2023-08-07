@@ -11,41 +11,45 @@ async function main() {
     isDuplicated: boolean;
   }[] = JSON.parse(await readFile("data-nicknames.json", "utf-8"));
 
-  const profiles: {
+  type Profile = {
     userId: string;
     displayName: string;
     pictureUrl?: string;
-  }[] = JSON.parse(await readFile("data-profiles.json", "utf-8"));
+  };
 
-  // const mappings = (await readFile("mappings.txt", "utf-8"))
-  //   .split("\n")
-  //   .filter((line) => line !== "")
-  //   .map((line) => {
-  //     const [userId, chatId] = line.split(" ");
-  //     return { userId, chatId };
-  //   });
+  type Candidate = {
+    chatId: string;
+    nickname: string;
+    icon: string;
+  };
 
-  const newProfiles = await Promise.all(
-    profiles.map(async (profile) => {
-      const filteredChats = chats.filter((chat) => {
-        return chat.name === profile.displayName;
-      });
+  const profiles: Profile[] = JSON.parse(
+    await readFile("data-profiles.json", "utf-8")
+  );
 
-      if (filteredChats.length === 0) {
-        return profile;
-      } else if (filteredChats.length === 1) {
-        return {
-          ...profile,
-          nickname: filteredChats[0].nickname,
-          chatId: filteredChats[0].chatId,
-        };
-      } else {
-        const candidates = filteredChats.map((chat) => ({
-          chatId: chat.chatId,
-          nickname: chat.nickname,
-          icon: chat.icon,
-        }));
+  const newProfiles: (
+    | Profile
+    | { nickname?: string; chatId?: string; candidates?: Candidate[] }
+  )[] = [];
 
+  for (const profile of profiles) {
+    const chatsWithSameName = chats.filter((chat) => {
+      return chat.name === profile.displayName;
+    });
+
+    if (chatsWithSameName.length === 0) {
+      newProfiles.push(profile);
+      continue;
+    }
+
+    const candidates = chatsWithSameName.map((chat) => ({
+      chatId: chat.chatId,
+      nickname: chat.nickname,
+      icon: chat.icon,
+    }));
+
+    newProfiles.push(
+      await (async () => {
         if (profile.pictureUrl) {
           const pictureDigest = await getImageHash(profile.pictureUrl);
 
@@ -56,8 +60,8 @@ async function main() {
               if (pictureDigest === iconDigest) {
                 return {
                   ...profile,
-                  nickname: filteredChats[0].nickname,
-                  chatId: filteredChats[0].chatId,
+                  nickname: chatsWithSameName[0].nickname,
+                  chatId: chatsWithSameName[0].chatId,
                 };
               }
             }
@@ -68,31 +72,9 @@ async function main() {
           ...profile,
           candidates,
         };
-
-        // const filteredMappings = mappings.filter((mapping) => {
-        //   return mapping.userId === profile.userId;
-        // });
-
-        // if (filteredMappings.length === 0) {
-        // } else if (filteredMappings.length === 1) {
-        //   const chat = filteredChats.find(
-        //     (chat) => chat.chatId === filteredMappings[0].chatId
-        //   );
-
-        //   if (!chat) {
-        //     throw new Error("!chat");
-        //   }
-
-        //   return {
-        //     ...profile,
-        //     nickname: chat.nickname,
-        //   };
-        // } else {
-        //   throw new Error("filteredMappings.length >= 2");
-        // }
-      }
-    })
-  );
+      })()
+    );
+  }
 
   console.log(JSON.stringify(newProfiles, null, 2));
 }
