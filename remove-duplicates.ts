@@ -12,16 +12,16 @@ async function main() {
   }[] = JSON.parse(await readFile("data-last-emoji.json", "utf-8"));
 
   const nicknames = users.map((user) => user.nickname);
-  const result = users.filter((user, i) => {
+  const result = users.filter((user) => {
     if (!user.nickname) {
       return true;
     }
 
-    if (nicknames.indexOf(user.nickname) === i) {
+    if (
+      nicknames.indexOf(user.nickname) === nicknames.lastIndexOf(user.nickname)
+    ) {
       return true;
     } else {
-      console.log(nicknames.indexOf(user.nickname), i);
-      console.log(user.nickname);
       return false;
     }
   });

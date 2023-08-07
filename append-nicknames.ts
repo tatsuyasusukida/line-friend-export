@@ -56,12 +56,11 @@ async function main() {
           for (const candidate of candidates) {
             if (candidate.icon !== "") {
               const iconDigest = await getImageHash(candidate.icon);
-
               if (pictureDigest === iconDigest) {
                 return {
                   ...profile,
-                  nickname: chatsWithSameName[0].nickname,
-                  chatId: chatsWithSameName[0].chatId,
+                  nickname: candidate.nickname,
+                  chatId: candidate.chatId,
                 };
               }
             }
